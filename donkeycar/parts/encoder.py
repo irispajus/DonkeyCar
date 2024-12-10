@@ -25,7 +25,7 @@ class ArduinoEncoder(object):
         from donkeycar.parts.pigpio_enc import OdomDist
         for item in serial.tools.list_ports.comports():
             print(item)  # list all the serial ports
-        self.ser = serial.Serial('/dev/ttyACM0', 115200, 8, 'N', 1, timeout=0.1)
+        self.ser = serial.Serial('/dev/ttyUSB0', 115200, 8, 'N', 1, timeout=0.1)
         # initialize the odometer values
         self.ser.write(str.encode('r'))  # restart the encoder to zero
         self.ticks = 0
