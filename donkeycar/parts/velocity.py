@@ -1,14 +1,22 @@
-import math
+
 import logging
 from donkeycar.utils import map_frange, sign, clamp
 
-#Setting up the logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-ch.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-logger.addHandler(ch)
+# Create a logger specific to this module
+logger = logging.getLogger(__name__)  # Use the module name as the logger name
+
+# Set up a handler to control formatting
+handler = logging.StreamHandler()  # Output to console
+formatter = logging.Formatter('%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+handler.setFormatter(formatter)
+
+# Attach the handler to the logger
+logger.addHandler(handler)
+
+# Set the logger level
+logger.setLevel(logging.WARNING)
+
+logger.propagate = False
 
 class VelocityNormalize:
     """
@@ -27,17 +35,18 @@ class VelocityNormalize:
         s = sign(speed)
         speed = abs(speed)
         if speed < self.min_speed:
-            logger.debug(f"Speed {speed} below min_speed {self.min_speed}, returning 0.0")
+            #logger.debug(f"Speed {speed} below min_speed {self.min_speed}, returning 0.0")
             return 0.0
         if speed >= self.max_speed:
-            logger.debug(f"Speed {speed} >= max_speed {self.max_speed}, returning 1.0")
+            #logger.debug(f"Speed {speed} >= max_speed {self.max_speed}, returning 1.0")
             return s * 1.0
         normalized_speed = s * map_frange(speed, self.min_speed, self.max_speed, self.min_normal_speed, 1.0)
-        logger.debug(f"Normalized speed: {normalized_speed}")
+        #logger.debug(f"Normalized speed: {normalized_speed}")
         return normalized_speed
 
     def shutdown(self):
-        logger.debug("Shutting down VelocityNormalize")
+        print ("Shutting down")
+        #logging.info("Shutting down VelocityNormalize")
 
 
 class VelocityUnnormalize:
@@ -53,17 +62,18 @@ class VelocityUnnormalize:
         s = sign(speed)
         speed = abs(speed)
         if speed < self.min_normal_speed:
-            logger.debug(f"Normalized speed {speed} below min_normal_speed {self.min_normal_speed}, returning 0.0")
+            #logger.debug(f"Normalized speed {speed} below min_normal_speed {self.min_normal_speed}, returning 0.0")
             return 0.0
         if speed >= 1.0:
-            logger.debug(f"Normalized speed {speed} >= 1.0, returning 1.0")
+            #logger.debug(f"Normalized speed {speed} >= 1.0, returning 1.0")
             return s * 1.0
         actual_speed = s * map_frange(speed, self.min_normal_speed, 1.0, self.min_speed, self.max_speed)
-        logger.debug(f"Normalized speed: {speed} Unnormalized speed: {actual_speed}")
+        #logger.debug(f"Normalized speed: {speed} Unnormalized speed: {actual_speed}")
         return actual_speed
 
     def shutdown(self):
-        logger.debug("Shutting down VelocityUnnormalize")
+        print ("Shutting down")
+        #logging.info("Shutting down VelocityUnnormalize")
 
 
 class StepSpeedController:
@@ -86,18 +96,18 @@ class StepSpeedController:
         self.min_throttle = min_throttle
         self.step_size = throttle_step
         self.prev_throttle = 0
-        self.logger = logging.getLogger(__name__)  # Logger for StepSpeedController
+        #self.logger = logging.getLogger(__name__)  # Logger for StepSpeedController
 
     def run(self, throttle: float, speed: float, target_speed: float) -> float:
         """
         Given current throttle and speed and a target speed,
         calculate a new throttle to attain target speed
         """
-        self.logger.debug(f"Running StepSpeedController - Current Speed: {speed}, Target Speed: {target_speed}")
+        #logger.info(f"Current Speed: {speed}, Target Speed: {target_speed}")
 
         if speed is None or target_speed is None:
             # no speed to control, just return throttle
-            self.logger.debug(f"Speed or target_speed is None. Returning previous throttle: {self.prev_throttle}")
+            #self.logger.debug(f"Speed or target_speed is None. Returning previous throttle: {self.prev_throttle}")
             return self.prev_throttle
 
         target_direction = sign(target_speed)
@@ -107,7 +117,7 @@ class StepSpeedController:
         speed = abs(speed)
 
         if target_speed < self.min_speed:
-            self.logger.debug(f"Target speed {target_speed} below min_speed {self.min_speed}. Returning 0")
+            #self.logger.debug(f"Target speed {target_speed} below min_speed {self.min_speed}. Returning 0")
             return 0
 
         # When changing direction or starting from stopped, calculate a feed-forward throttle estimate
@@ -121,24 +131,24 @@ class StepSpeedController:
 
         # Adjust throttle based on speed comparison with target_speed
         throttle = self.prev_throttle
-        self.logger.debug(f"Current throttle: {throttle}")
+        logger.info(f"{round(speed, 3)}, {round(target_speed, 3)}, {round(throttle, 3)}")
 
         if speed > target_speed:
             # Too fast, slow down
             throttle -= self.step_size
-            self.logger.debug(f"Speed is greater than target, reducing throttle to: {throttle}")
+            #self.logger.debug(f"Speed is greater than target, reducing throttle to: {throttle}")
         elif speed < target_speed:
             # Too slow, speed up
             throttle += self.step_size
-            self.logger.debug(f"Speed is less than target, increasing throttle to: {throttle}")
+            #self.logger.debug(f"Speed is less than target, increasing throttle to: {throttle}")
 
         self.prev_throttle = throttle
-        self.logger.debug(f"New throttle value: {self.prev_throttle}")
+        #self.logger.debug(f"New throttle value: {self.prev_throttle}")
         return target_direction * throttle
 
     def shutdown(self):
-        self.logger.debug("Shutting down StepSpeedController")
-
+        print ("Shutting down StepSpeedController")
+        #self.logger.debug("Shutting down StepSpeedController")
 
 class PIDSpeedController:
     """
@@ -152,18 +162,18 @@ class PIDSpeedController:
         self.integral = 0
         self.prev_speed = 0.0
         self.min_speed = 0.2
-        self.logger = logging.getLogger(__name__)  # Logger for PIDSpeedController
+        #self.logger = logging.getLogger(__name__)  # Logger for PIDSpeedController
 
     def run(self, throttle: float, target_speed: float, current_speed: float):
         """
         Take in current speed from encoder data as well as target speed from model
         and adjust throttle accordingly.
         """
-        self.logger.debug(f"Running PIDSpeedController - Target Speed: {target_speed}, Current Speed: {current_speed}")
+        #self.logger.debug(f"Running PIDSpeedController - Target Speed: {target_speed}, Current Speed: {current_speed}")
 
         if current_speed is None or target_speed is None:
             # no speed to control, just return throttle
-            self.logger.debug(f"Current speed or target speed is None. Returning throttle: {throttle}")
+            #self.logger.debug(f"Current speed or target speed is None. Returning throttle: {throttle}")
             return throttle
 
         if current_speed == 0.0:
@@ -181,12 +191,18 @@ class PIDSpeedController:
         result = clamp(self.kp * error + self.ki * self.integral + self.kd * derivative, -1.0, 1.0)
 
         if 0 <= self.min_speed <= self.min_speed:
-            self.logger.debug(f"Speed is too slow, returning min_speed: {self.min_speed}")
+            #self.logger.debug(f"Speed is too slow, returning min_speed: {self.min_speed}")
             return self.min_speed
         else:
-            self.logger.debug(f"PID result: {result}")
+            #self.logger.debug(f"PID result: {result}")
             return result
 
     def shutdown(self):
-        self.logger.debug("Shutting down PIDSpeedController")
+        print ("Shutting down PIDController")
+        #self.logger.debug("Shutting down PIDSpeedController")
+
+
+
+
+
 

@@ -6,11 +6,27 @@ import logging
 SERIAL_PORT = '/dev/ttyUSB0'  # Update with your serial port
 BAUD_RATE = 115200
 MM_PER_TICK = 12.25  # Distance moved per tick in millimeters
-TICK_INTERVAL = 1  # Time interval to calculate speed in seconds
+TICK_INTERVAL = 0.1  # Time interval to calculate speed in seconds
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.INFO)
 
+# Create a logger specific to this module
+logger = logging.getLogger(__name__)  # Use the module name as the logger name
+
+# Set up a handler to control formatting
+handler = logging.StreamHandler()  # Output to console
+formatter = logging.Formatter('%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+handler.setFormatter(formatter)
+
+# Attach the handler to the logger
+logger.addHandler(handler)
+
+# Set the logger level
+logger.setLevel(logging.INFO)
+
+# Ensure the logger doesn't propagate messages to parent loggers (prevents duplicates)
+logger.propagate = False
 
 class ArduinoSpeedReader:
     def __init__(self, port, baudrate):
@@ -24,7 +40,7 @@ class ArduinoSpeedReader:
         try:
             self.ser = serial.Serial(self.port, self.baudrate, timeout=1)
         except serial.SerialException as e:
-            logging.error(f"Failed to open serial port: {e}")
+            #logging.error(f"Failed to open serial port: {e}")
             raise
 
         self.start_continuous_mode()
@@ -32,10 +48,11 @@ class ArduinoSpeedReader:
     def start_continuous_mode(self):
         """Send the command to Arduino to start sending data at regular intervals."""
         try:
-            self.ser.write(b'c100\n')  # Command to start continuous data transmission
-            logging.info("Started continuous mode on Arduino.")
+            self.ser.write(b'c50\n')  # Command to start continuous data transmission
+            #logging.info("Started continuous mode on Arduino.")
         except Exception as e:
-            logging.error(f"Failed to send continuous mode command: {e}")
+            pass
+            #logging.error(f"Failed to send continuous mode command: {e}")
 
     def get_actual_speed(self):
         """Retrieve and calculate speed from Arduino data."""
@@ -66,10 +83,12 @@ class ArduinoSpeedReader:
                         self.last_ticks = ticks
 
                     except ValueError:
-                        logging.warning(f"Malformed data received: {line}")
+                        pass
+                        #logging.warning(f"Malformed data received: {line}")
 
         except Exception as e:
-            logging.error(f"Error reading from serial port: {e}")
+            pass
+            #logging.error(f"Error reading from serial port: {e}")
 
         # Return the current speed
         return self.speed
@@ -93,11 +112,12 @@ if __name__ == "__main__":
         # Continuously fetch and log speed
         while True:
             speed_mps = arduino_reader.run()
-            logging.info(f"Speed: {speed_mps:.2f} m/s")
+            logger.info(f"Speed: {speed_mps:.2f} m/s")
             time.sleep(0.1)  # Avoid excessive CPU usage
     except KeyboardInterrupt:
         logging.info("Stopping speed calculation.")
     finally:
         if 'arduino_reader' in locals():
             arduino_reader.close()
+
 
