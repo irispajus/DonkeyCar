@@ -1,4 +1,4 @@
-This is a project to intagrate a infrared speed sensor to DonkeyCar (version 4.3.22) and regulate throttle based on current speed. Since battery runs out during the driving and the thottle value is not adjusted a StepSpeedController from Autorope DonkeyCar velocity.py, branch 5483490 and additional new sketch sensordata.py were introduced. 
+This is a project to integrate a infrared speed sensor to DonkeyCar (version 4.3.22) and regulate throttle based on current speed. Since battery runs out during the driving and the thottle value is not adjusted a StepSpeedController from Autorope DonkeyCar velocity.py, branch 5483490 and additional new script sensordata.py were introduced. 
 
 For running this code and driving the car, manage.py is used. To incorporate the StepSpeedController run a command: python manage.py drive --js --type=velocity. The terminal outputs the values for timestamp, current speed, target speed and current throttle. 
 
@@ -8,13 +8,13 @@ New sketched loaded to Raspberry Pi:
 - velocity.py (handles speed regulation)
 - sensordata.py (reads data from Arduino nano, sensor)
 - serial_port.py (additional code to support data reading from serial port)
-- usb_test.py (optional sketch to test how and if the Arduino nano sends the data from sensor correctly)
+- usb_test.py (optional script to test how and if the Arduino nano sends the data from sensor correctly)
 
-Modified sketches (recommended to be used from DonkeyCar version 5.0 and add the modifications)
+Modified script (recommended to be used from DonkeyCar version 5.0 and add the modifications)
 - complete.py (used entirely new version from 5.0)
-- manage.py (added StepSpeedController, VelocityNormalize, StepSpeedController)
+- manage.py (added StepSpeedController, VelocityNormalize, ArduinoSpeedReader)
 
-Additional sketches loaded, some are just needed to complete the sketches downloaded from version 5.0
+Additional scripts loaded, some are just needed to complete the scripts downloaded from version 5.0
 - odometer.py
 - tachometer.py
 - kinematics.py
